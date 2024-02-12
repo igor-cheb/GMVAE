@@ -1,0 +1,5 @@
+---
+# Dimensions of the decoder for continuous VAE.
+dims:
+  - 128
+  - 128

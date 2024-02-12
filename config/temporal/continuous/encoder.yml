@@ -1,0 +1,5 @@
+---
+# Dimensions of the encoder for continuous temporal VAE.
+num_layers_shared: 2
+num_layers_mu_logvar: 1
+bidirectional: True

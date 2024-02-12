@@ -1,0 +1,9 @@
+---
+# Number of workers for the dataloader.
+num_workers: 4
+
+# Batch size.
+batch_size: 32
+
+# Shuffle the data.
+shuffle: True

@@ -1,0 +1,5 @@
+---
+# Dimensions of the node model for continuous temporal VAE.
+dims:
+  - 256
+  - 256

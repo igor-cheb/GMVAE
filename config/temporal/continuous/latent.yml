@@ -1,0 +1,3 @@
+---
+# Parameters of latent space for continuous temporal VAE.
+dim: 256

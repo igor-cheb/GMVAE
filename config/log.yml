@@ -1,0 +1,15 @@
+---
+# Whether to log training progress
+progress: True
+
+# Number of steps between logging a original vs generated plot during training.
+train_plot_frequency: 250
+
+# Number of generations in the test step
+n_generations: 50
+
+# name of the wandb project to log to
+project_name: test
+
+# name of the wandb run to log to
+experiment_name: test

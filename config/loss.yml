@@ -1,0 +1,4 @@
+---
+# Parameters for the loss function
+divergence_weight: .008
+reconstruction_weight: 1.

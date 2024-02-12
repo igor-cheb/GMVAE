@@ -1,0 +1,4 @@
+---
+# Dimension of the latent space.
+dim: 128
+category: 4

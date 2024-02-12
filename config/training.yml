@@ -1,0 +1,6 @@
+---
+# Maximum number of epochs.
+max_epochs: 50
+
+# Device to use for training.
+accelerator: cpu

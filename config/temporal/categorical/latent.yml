@@ -1,0 +1,4 @@
+---
+# Parameters of latent space for categorical temporal VAE.
+features: 64
+categories: 6

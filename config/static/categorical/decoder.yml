@@ -1,0 +1,5 @@
+---
+# Dimensions of the decoder for categorical VAE.
+dims: 
+  - 512
+  - 256

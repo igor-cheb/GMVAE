@@ -1,0 +1,5 @@
+---
+# Dimensions of the encoder for categorical VAE.
+dims: 
+  - 256
+  - 256

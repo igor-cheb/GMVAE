@@ -8,7 +8,9 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "==3.10.9"
 torch = "^2.2.0"
-
+synthetic_multinode = { git = "git@github.com:inovintell/synthetic_multinode.git", branch = "75"}
+seafig = { git = "git@github.com:inovintell/seafig.git"}
+jupyter = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core"]

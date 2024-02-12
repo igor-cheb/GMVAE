@@ -1,0 +1,15 @@
+---
+# Batch dimension of the dataset tb generated.
+data_size: 2000
+
+# Time dimension of the dataset tb generated.
+seq_len: 12
+
+# Categorical dimension of the dataset tb generated.
+num_categories: 8
+
+# Add noise
+noise_std: 0.05
+
+# Add condition feature to conditional dataset
+add_condition: False
