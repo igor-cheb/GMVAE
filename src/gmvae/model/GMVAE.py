@@ -10,9 +10,9 @@ import torch
 import numpy as np
 from torch import nn, optim
 from torch.utils.data.sampler import SubsetRandomSampler
-from networks.Networks import *
-from losses.LossFunctions import *
-from metrics.Metrics import *
+from ..networks.Networks import *
+from ..losses.LossFunctions import *
+# from ..metrics.Metrics import *
 import matplotlib.pyplot as plt
 
 class GMVAE:
@@ -36,6 +36,9 @@ class GMVAE:
     self.gaussian_size = args.gaussian_size
     self.input_size = args.input_size
 
+    self.inf_neurons = args.inf_neurons
+    self.gen_neurons = args.gen_neurons
+
     # gumbel
     self.init_temp = args.init_temp
     self.decay_temp = args.decay_temp
@@ -44,12 +47,12 @@ class GMVAE:
     self.decay_temp_rate = args.decay_temp_rate
     self.gumbel_temp = self.init_temp
 
-    self.network = GMVAENet(self.input_size, self.gaussian_size, self.num_classes)
+    self.network = GMVAENet(self.input_size, self.gaussian_size, self.num_classes, self.inf_neurons, self.gen_neurons)
     self.losses = LossFunctions()
-    self.metrics = Metrics()
+    # self.metrics = Metrics()
 
     if self.cuda:
-      self.network = self.network.cuda() 
+      self.network = self.network.to("mps") 
   
 
   def unlabeled_loss(self, data, out_net):
@@ -110,13 +113,13 @@ class GMVAE:
     nmi = 0.
     num_batches = 0.
     
-    true_labels_list = []
+    # true_labels_list = []
     predicted_labels_list = []
 
     # iterate over the dataset
-    for (data, labels) in data_loader:
+    for data in data_loader:
       if self.cuda == 1:
-        data = data.cuda()
+        data = data.to("mps")
 
       optimizer.zero_grad()
 
@@ -132,7 +135,7 @@ class GMVAE:
       total_loss += total.item()
       recon_loss += unlab_loss_dic['reconstruction'].item()
       gauss_loss += unlab_loss_dic['gaussian'].item()
-      cat_loss += unlab_loss_dic['categorical'].item()
+      cat_loss   += unlab_loss_dic['categorical'].item()
 
       # perform backpropagation
       total.backward()
@@ -140,7 +143,7 @@ class GMVAE:
 
       # save predicted and true labels
       predicted = unlab_loss_dic['predicted_labels']
-      true_labels_list.append(labels)
+      # true_labels_list.append(labels)
       predicted_labels_list.append(predicted)   
    
       num_batches += 1. 
@@ -152,12 +155,12 @@ class GMVAE:
     cat_loss /= num_batches
     
     # concat all true and predicted labels
-    true_labels = torch.cat(true_labels_list, dim=0).cpu().numpy()
+    # true_labels = torch.cat(true_labels_list, dim=0).cpu().numpy()
     predicted_labels = torch.cat(predicted_labels_list, dim=0).cpu().numpy()
 
     # compute metrics
-    accuracy = 100.0 * self.metrics.cluster_acc(predicted_labels, true_labels)
-    nmi = 100.0 * self.metrics.nmi(predicted_labels, true_labels)
+    # accuracy = 100.0 * self.metrics.cluster_acc(predicted_labels, true_labels)
+    # nmi = 100.0 * self.metrics.nmi(predicted_labels, true_labels)
 
     return total_loss, recon_loss, gauss_loss, cat_loss, accuracy, nmi
 
@@ -183,13 +186,13 @@ class GMVAE:
     nmi = 0.
     num_batches = 0.
     
-    true_labels_list = []
+    # true_labels_list = []
     predicted_labels_list = []
 
     with torch.no_grad():
-      for data, labels in data_loader:
+      for data in data_loader:
         if self.cuda == 1:
-          data = data.cuda()
+          data = data.to("mps")
       
         # flatten data
         data = data.view(data.size(0), -1)
@@ -202,11 +205,12 @@ class GMVAE:
         total_loss += unlab_loss_dic['total'].item()
         recon_loss += unlab_loss_dic['reconstruction'].item()
         gauss_loss += unlab_loss_dic['gaussian'].item()
-        cat_loss += unlab_loss_dic['categorical'].item()
+        cat_loss   += unlab_loss_dic['categorical'].item()
 
         # save predicted and true labels
         predicted = unlab_loss_dic['predicted_labels']
-        true_labels_list.append(labels)
+        
+        # true_labels_list.append(labels)
         predicted_labels_list.append(predicted)   
    
         num_batches += 1. 
@@ -219,12 +223,12 @@ class GMVAE:
       cat_loss /= num_batches
     
     # concat all true and predicted labels
-    true_labels = torch.cat(true_labels_list, dim=0).cpu().numpy()
+    # true_labels = torch.cat(true_labels_list, dim=0).cpu().numpy()
     predicted_labels = torch.cat(predicted_labels_list, dim=0).cpu().numpy()
 
     # compute metrics
-    accuracy = 100.0 * self.metrics.cluster_acc(predicted_labels, true_labels)
-    nmi = 100.0 * self.metrics.nmi(predicted_labels, true_labels)
+    # accuracy = 100.0 * self.metrics.cluster_acc(predicted_labels, true_labels)
+    # nmi = 100.0 * self.metrics.nmi(predicted_labels, true_labels)
 
     if return_loss:
       return total_loss, recon_loss, gauss_loss, cat_loss, accuracy, nmi
@@ -290,13 +294,13 @@ class GMVAE:
     self.network.eval()
     N = len(data_loader.dataset)
     features = np.zeros((N, self.gaussian_size))
-    if return_labels:
-      true_labels = np.zeros(N, dtype=np.int64)
+    # if return_labels:
+    #   true_labels = np.zeros(N, dtype=np.int64)
     start_ind = 0
     with torch.no_grad():
-      for (data, labels) in data_loader:
+      for data in data_loader:
         if self.cuda == 1:
-          data = data.cuda()
+          data = data.to("mps")
         # flatten data
         data = data.view(data.size(0), -1)  
         out = self.network.inference(data, self.gumbel_temp, self.hard_gumbel)
@@ -304,12 +308,12 @@ class GMVAE:
         end_ind = min(start_ind + data.size(0), N+1)
 
         # return true labels
-        if return_labels:
-          true_labels[start_ind:end_ind] = labels.cpu().numpy()
+        # if return_labels:
+        #   true_labels[start_ind:end_ind] = labels.cpu().numpy()
         features[start_ind:end_ind] = latent_feat.cpu().detach().numpy()  
         start_ind += data.size(0)
-    if return_labels:
-      return features, true_labels
+    # if return_labels:
+    #   return features, true_labels
     return features
 
 
@@ -331,10 +335,10 @@ class GMVAE:
   
     # obtain values
     it = iter(test_random_loader)
-    test_batch_data, _ = it.next()
-    original = test_batch_data.data.numpy()
+    test_batch_data = next(it)
+    original = test_batch_data.data.flatten(1).numpy()
     if self.cuda:
-      test_batch_data = test_batch_data.cuda()  
+      test_batch_data = test_batch_data.to("mps") 
 
     # obtain reconstructed data  
     out = self.network(test_batch_data, self.gumbel_temp, self.hard_gumbel) 
@@ -358,7 +362,7 @@ class GMVAE:
     
     # plot only the first 2 dimensions
     fig = plt.figure(figsize=(8, 6))
-    plt.scatter(features[:, 0], features[:, 1], c=labels, marker='o',
+    plt.scatter(features[:, 0], features[:, 1], marker='o',  #c=labels,
             edgecolor='none', cmap=plt.cm.get_cmap('jet', 10), s = 10)
     plt.colorbar()
     if(save):
@@ -384,7 +388,7 @@ class GMVAE:
     categorical = F.one_hot(torch.tensor(indices), self.num_classes).float()
     
     if self.cuda:
-      categorical = categorical.cuda()
+      categorical = categorical.to("mps")
   
     # infer the gaussian distribution according to the category
     mean, var = self.network.generative.pzy(categorical)

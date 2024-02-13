@@ -10,29 +10,31 @@ import torch
 import torch.nn.init as init
 from torch import nn
 from torch.nn import functional as F
-from networks.Layers import *
+from . import Layers
 
 # Inference Network
 class InferenceNet(nn.Module):
-  def __init__(self, x_dim, z_dim, y_dim):
+  def __init__(self, x_dim, z_dim, y_dim, inf_neurons = 256):
     super(InferenceNet, self).__init__()
 
     # q(y|x)
     self.inference_qyx = torch.nn.ModuleList([
-        nn.Linear(x_dim, 512),
+        nn.Linear(x_dim, inf_neurons),
         nn.ReLU(),
-        nn.Linear(512, 512),
+        nn.Linear(inf_neurons, inf_neurons),
         nn.ReLU(),
-        GumbelSoftmax(512, y_dim)
+        Layers.GumbelSoftmax(inf_neurons, y_dim)
     ])
 
     # q(z|y,x)
     self.inference_qzyx = torch.nn.ModuleList([
-        nn.Linear(x_dim + y_dim, 512),
+        nn.Linear(x_dim + y_dim, inf_neurons),
         nn.ReLU(),
-        nn.Linear(512, 512),
+        # nn.Linear(inf_neurons, inf_neurons),
+        # nn.ReLU(),
+        nn.Linear(inf_neurons, inf_neurons),
         nn.ReLU(),
-        Gaussian(512, z_dim)
+        Layers.Gaussian(inf_neurons, z_dim)
     ])
 
   # q(y|x)
@@ -54,7 +56,7 @@ class InferenceNet(nn.Module):
     return concat
   
   def forward(self, x, temperature=1.0, hard=0):
-    #x = Flatten(x)
+    # x = x.flatten(dim=1)
 
     # q(y|x)
     logits, prob, y = self.qyx(x, temperature, hard)
@@ -69,7 +71,7 @@ class InferenceNet(nn.Module):
 
 # Generative Network
 class GenerativeNet(nn.Module):
-  def __init__(self, x_dim, z_dim, y_dim):
+  def __init__(self, x_dim, z_dim, y_dim, gen_neurons = 256):
     super(GenerativeNet, self).__init__()
 
     # p(z|y)
@@ -78,12 +80,14 @@ class GenerativeNet(nn.Module):
 
     # p(x|z)
     self.generative_pxz = torch.nn.ModuleList([
-        nn.Linear(z_dim, 512),
+        nn.Linear(z_dim, gen_neurons),
         nn.ReLU(),
-        nn.Linear(512, 512),
+        # nn.Linear(gen_neurons, gen_neurons),
+        # nn.ReLU(),
+        nn.Linear(gen_neurons, gen_neurons),
         nn.ReLU(),
-        nn.Linear(512, x_dim),
-        torch.nn.Sigmoid()
+        nn.Linear(gen_neurons, x_dim),
+        # torch.nn.Sigmoid()
     ])
 
   # p(z|y)
@@ -111,11 +115,11 @@ class GenerativeNet(nn.Module):
 
 # GMVAE Network
 class GMVAENet(nn.Module):
-  def __init__(self, x_dim, z_dim, y_dim):
+  def __init__(self, x_dim, z_dim, y_dim, inf_neurons = 256, gen_neurons = 256):
     super(GMVAENet, self).__init__()
 
-    self.inference = InferenceNet(x_dim, z_dim, y_dim)
-    self.generative = GenerativeNet(x_dim, z_dim, y_dim)
+    self.inference = InferenceNet(x_dim, z_dim, y_dim, inf_neurons)
+    self.generative = GenerativeNet(x_dim, z_dim, y_dim, gen_neurons)
 
     # weight initialization
     for m in self.modules():
